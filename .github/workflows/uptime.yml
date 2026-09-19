@@ -1,0 +1,36 @@
+name: core1 uptime
+# CF-277 - the outside check. core1-monitor runs ON core1, so if core1 dies it
+# says nothing; this runs on GitHub's machines instead. A failed run emails the
+# account owner (GitHub sends workflow-failure mail by default).
+on:
+  schedule:
+    - cron: '*/15 * * * *'      # GitHub's cron can lag 5-15 min; fine for "is it dead"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: gateway health
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 https://gateway.ctrlflows.com/healthz)
+          echo "gateway.ctrlflows.com/healthz -> $code"
+          [ "$code" = "200" ] || exit 1
+      - name: n8n health (CTRL Flows hostname)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 https://n8n.ctrlflows.com/healthz)
+          echo "n8n.ctrlflows.com/healthz -> $code"
+          [ "$code" = "200" ] || exit 1
+      - name: n8n health (RVR hostname - the one clients depend on)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 https://n8n.rvrratingpartners.co.uk/healthz)
+          echo "n8n.rvrratingpartners.co.uk/healthz -> $code"
+          [ "$code" = "200" ] || exit 1
+      - name: certificates have more than 10 days left
+        run: |
+          for h in gateway.ctrlflows.com n8n.ctrlflows.com n8n.rvrratingpartners.co.uk; do
+            end=$(echo | openssl s_client -servername $h -connect $h:443 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
+            left=$(( ( $(date -d "$end" +%s) - $(date +%s) ) / 86400 ))
+            echo "$h: $left days"
+            [ "$left" -ge 10 ] || exit 1
+          done
