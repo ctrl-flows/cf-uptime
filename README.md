@@ -23,3 +23,5 @@ it gives you push notifications this does not.
 GitHub's scheduled runs drift by 5-15 minutes under load, so a tighter schedule
 buys nothing. This catches "core1 is down"; the 5-minute monitor on core1 itself
 catches everything finer.
+
+_Signing test: this commit is signed with the Tyr1-Dev SSH signing key (CF-385)._
