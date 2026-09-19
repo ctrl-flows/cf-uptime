@@ -25,3 +25,5 @@ buys nothing. This catches "core1 is down"; the 5-minute monitor on core1 itself
 catches everything finer.
 
 _Signing test: this commit is signed with the Tyr1-Dev SSH signing key (CF-385)._
+
+_Verified-signature check, 2026-09-19._
